@@ -1,0 +1,23 @@
+{
+  "name": "ruienger-cli",
+  "version": "0.0.1",
+  "description": "ruienger名下项目所需的脚手架",
+  "bin": {
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruienger/ruienger-cli.git"
+  },
+  "keywords": [
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ruienger/ruienger-cli/issues"
+  },
+  "homepage": "https://github.com/ruienger/ruienger-cli#readme"
+}
