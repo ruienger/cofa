@@ -1,9 +1,19 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander'
-import createMixin from '../command/init'
-const program = new Command('ruienger-cli')
+import { Command } from "commander";
+import createMixin from "../command/create";
+import devMixin from "../command/dev";
+import testMixin from "../command/test";
+import buildMixin from "../command/build";
+import configMixin from "../command/config";
 
-createMixin(program.version('0.0.1'))
+const program = new Command("cofa");
+program.version("0.0.1");
 
-program.parse()
+createMixin(program);
+devMixin(program);
+testMixin(program);
+buildMixin(program);
+configMixin(program);
+
+program.parse();
