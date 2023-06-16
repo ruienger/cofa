@@ -1,10 +1,10 @@
 {
-  "name": "@ruienger/r2puc",
+  "name": "@ruienger/cofa",
   "version": "0.0.1",
   "description": "a cli run in a processflow you customized",
   "type": "module",
   "bin": {
-    "r2puc": "disk/index.js"
+    "cofa": "disk/index.js"
   },
   "scripts": {
     "build": "rollup --config",
@@ -46,18 +46,5 @@
     "commander": "^9.2.0",
     "inquirer": "^8.2.4",
     "ora": "^6.1.0"
-  },
-  "directories": {
-    "test": "test"
-  },
-  "workspaces": [
-    "undefined/undefined",
-    "what",
-    "test0",
-    "test1/test0",
-    "test2",
-    "test1",
-    ""
-  ],
-  "main": "rollup.config.js"
+  }
 }
