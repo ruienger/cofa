@@ -1,5 +1,8 @@
-export type R2pucCommands = 'build' | 'dev' | 'init' | 'config' | 'test'
+export type CofaCommandsArgs = {
+  create: {
+    projectname: string;
+    floderpath: string;
+  };
+};
 
-export type CommandStatus = 'pre' | 'post' | ''
-
-export type InitArguments = [string, string?, { default: boolean }?]
+export type CofaCommands = keyof CofaCommandsArgs;
