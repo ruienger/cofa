@@ -3,21 +3,37 @@
   "version": "0.0.1",
   "description": "快速创建项目目录结构的工具",
   "bin": {
+    "cofa": "dist/src/index.js"
   },
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsc --watch",
+    "lint": "eslint --fix .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ruienger/cofa.git"
   },
-  "keywords": [
-    "cli"
-  ],
-  "author": "",
+  "keywords": [],
+  "author": "ruienger",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ruienger/cofa/issues"
   },
-  "homepage": "https://github.com/ruienger/cofa#readme"
+  "homepage": "https://github.com/ruienger/cofa#readme",
+  "devDependencies": {
+    "@tsconfig/esm": "^1.0.3",
+    "@types/node": "^20.3.1",
+    "@types/prompts": "^2.4.4",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
+    "eslint": "^8.43.0",
+    "eslint-config-xo": "^0.43.1",
+    "eslint-config-xo-typescript": "^0.57.0",
+    "mri": "^1.2.0",
+    "prompts": "^2.4.2",
+    "typescript": "^5.1.3"
+  }
 }
