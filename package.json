@@ -1,7 +1,7 @@
 {
-  "name": "ruienger-cli",
+  "name": "@ruienger/cofa",
   "version": "0.0.1",
-  "description": "ruienger名下项目所需的脚手架",
+  "description": "快速创建项目目录结构的工具",
   "bin": {
   },
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ruienger/ruienger-cli.git"
+    "url": "git+https://github.com/ruienger/cofa.git"
   },
   "keywords": [
     "cli"
@@ -17,7 +17,7 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ruienger/ruienger-cli/issues"
+    "url": "https://github.com/ruienger/cofa/issues"
   },
-  "homepage": "https://github.com/ruienger/ruienger-cli#readme"
+  "homepage": "https://github.com/ruienger/cofa#readme"
 }
