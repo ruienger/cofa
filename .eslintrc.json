@@ -3,17 +3,26 @@
     "es2021": true,
     "node": true
   },
-  "extends": [
-    "airbnb"
+  "extends": "xo",
+  "overrides": [
+    {
+      "extends": [
+        "xo-typescript"
+      ],
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ]
+    }
   ],
-  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "rules": {},
-  "ignorePatterns": ["**.js", "disk/*"]
+  "rules": {
+    // https://typescript-eslint.io/rules/object-curly-spacing/
+    "object-curly-spacing": "off",
+    "@typescript-eslint/object-curly-spacing": "off"
+  },
+  "ignorePattern": ["dist"]
 }

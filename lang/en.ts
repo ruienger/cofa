@@ -1,5 +1,0 @@
-export const WARN_PROCESS_NAME_DUPLICATED = "Some of those Processes are duplicated.\nPlease make sure that the Process's name is unique."
-export const INFO_SCHEDULER_FINISHED = "Scheduler stopped.\nAll processes are done."
-export const WARN = "警告："
-export const INFO = "信息："
-export const ERROR = "错误："
