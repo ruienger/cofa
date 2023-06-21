@@ -1,18 +1,30 @@
-export type ProcessOutputTypeMap = {
-  projectTypePrompt: "web" | "modileapp" | "cmdline" | "lib";
-  webFramePrompt: "web_vue2_webpack" | "web_vue3_ts_vite" | "web_vue3_ts_ele_vite";
-  libFramePrompt: "lib_rollup" | "" | "lib_ts_rollup";
-  [x: string]: any;
+export interface StandardProcessOutput {
+  location: string;
+  username: string;
+  repo: string;
+  branch: string;
+}
+
+// 所有流程的名称以及其输出内容在这里定义
+export type ProcessOutputMap = {
+  standard: any;
+  promptTarget: "webcms" | "nodelib" | "tempurl";
+  promptWebcms: StandardProcessOutput;
+  promptNodelib: StandardProcessOutput;
+  promptTempurl: StandardProcessOutput;
+  actionCreate: void;
 };
+
+export type ProcessName = keyof ProcessOutputMap;
+
+export type ProcessStatus = "Idle" | "Running" | "Abort" | "Finished" | "Error";
+
+export type ProcessOutput<T extends ProcessName> = ProcessOutputMap[T];
 
 export type ProcessNeeds = {
-  [T in keyof ProcessOutputTypeMap]?: (output: ProcessOutputTypeMap[T]) => boolean;
+  [T in ProcessName]?: (output: ProcessOutputMap[T]) => boolean;
 };
 
-export type ProcessOutput<T extends keyof ProcessOutputTypeMap> = ProcessOutputTypeMap[T];
-
-// export type ProcessInput<N extends ProcessNeeds> = {
-//   [T in keyof N]: Parameters<N[T] ? N[T] : () => void>
-// };
-
-export type ProcessInput<T extends keyof ProcessOutputTypeMap> = Pick<ProcessOutputTypeMap, T>;
+export type ProcessInput = {
+  [T in keyof ProcessNeeds]?: ProcessOutputMap[T];
+};

@@ -1,8 +1,5 @@
-export type CofaCommandsArgs = {
-  create: {
-    projectname: string;
-    floderpath: string;
-  };
-};
-
-export type CofaCommands = keyof CofaCommandsArgs;
+export interface CofaArgv {
+  projectname: string;
+  folderpath: string;
+  givenurl?: string;
+}

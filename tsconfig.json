@@ -8,10 +8,6 @@
     "paths": {
       "src": ["src"],
       "types": ["types"],
-      "core": ["/src/core"],
-      "utils": ["/src/utils"],
-      "bin": ["/src/bin"],
-      "command": ["/src/command"],
     },
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
