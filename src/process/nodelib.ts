@@ -1,14 +1,13 @@
 import prompts from "prompts";
 import Process from "src/core/process";
-import { nullOfTheseChoice } from "./common";
 import { generateStandardOutput } from "src/utils";
+import { nullOfTheseChoice } from "./common";
 
 export const name = "promptNodelib";
 
 export default new Process<typeof name>(name, {
   async runner() {
-    const prefix = this.input.promptTarget as "nodelib";
-    const answer = await prompts([
+    const { typescript, buildlib } = await prompts([
       {
         type: "select",
         name: "buildlib",
@@ -26,9 +25,7 @@ export default new Process<typeof name>(name, {
       },
     ]);
 
-    const { typescript, buildlib } = answer;
-
-    return generateStandardOutput([prefix, buildlib, typescript]);
+    return generateStandardOutput([this.input.promptTarget, buildlib, typescript]);
   },
   needs: {
     promptTarget: (output) => {

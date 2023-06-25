@@ -1,7 +1,7 @@
 import type { StandardProcessOutput } from "types/process";
 import { resolve } from "node:path";
 import Process from "src/core/process";
-import { clone, mkdir, move, rmrf, unzip, exec, spin } from "src/utils";
+import { clone, exec, gitinit, mkdir, move, pipe, rmrf, unzip } from "src/utils";
 
 export const name = "actionCreate";
 
@@ -28,7 +28,8 @@ export default new Process<typeof name>(name, {
     await unzip(zippath, targetpath);
     await rmrf(zippath);
     await move(contentpath, targetpath);
-    await exec(`cd ${targetpath} && git init`);
+    await gitinit(targetpath);
+
     console.log("项目创建完成，在终端输入以下命令以启动：");
     console.log("$ cd " + targetpath);
     console.log("$ npm i");

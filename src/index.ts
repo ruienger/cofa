@@ -30,7 +30,7 @@ const {
     t: "template",
   },
   unknown(flag) {
-    console.log("unknown option " + flag);
+    console.error("unknown option " + flag);
     process.exit(0);
   },
 });
