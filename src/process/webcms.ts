@@ -1,27 +1,24 @@
 import prompts from "prompts";
 import Process from "src/core/process";
-import { nullOfTheseChoice } from "./common";
 import { generateStandardOutput } from "src/utils";
+import { nullOfTheseChoice } from "./common";
 
 export const name = "promptWebcms";
 
 export default new Process<typeof name>(name, {
   async runner() {
-    let componentlib: any = "";
-
-    const prefix = this.input.promptTarget as "webcms";
-    const answer = await prompts([
+    const { framework, graphiclib, typescript } = await prompts([
       {
         type: "select",
         name: "framework",
         message: "选择您想要使用的web端框架",
-        choices: [{ title: "React", value: "react" }, { title: "Vue3", value: "vue3" }, { title: "Vue2", value: "vue2" }, { title: "Angular", value: "angular" }, nullOfTheseChoice],
+        choices: [{ title: "React", value: "react" }, { title: "Vue3", value: "vue3" }, { title: "Vue2", value: "vue2" }, nullOfTheseChoice],
       },
       {
         type: "select",
         name: "graphiclib",
         message: "选择您想要使用的可视化库",
-        choices: [{ title: "ECharts", value: "echarts" }, { title: "D3JS", value: "d3" }, { title: "AntV", value: "antv" }, { title: "Cesium", value: "cesium" }, nullOfTheseChoice],
+        choices: [{ title: "ECharts", value: "echarts" }, { title: "D3JS", value: "d3" }, { title: "Cesium", value: "cesium" }, nullOfTheseChoice],
       },
       {
         type: "toggle",
@@ -34,7 +31,7 @@ export default new Process<typeof name>(name, {
       },
     ]);
 
-    if (answer.framework) {
+    if (framework) {
       const choices: Map<string, prompts.Choice[]> = new Map([
         [
           "vue3",
@@ -52,19 +49,18 @@ export default new Process<typeof name>(name, {
         ],
       ]);
 
-      componentlib = await prompts([
+      const { componentlib } = await prompts([
         {
           type: "select",
           name: "componentlib",
           message: "选择您想要使用的组件库",
-          choices: (choices.get(answer.framework) || []).concat(nullOfTheseChoice),
+          choices: (choices.get(framework) || []).concat(nullOfTheseChoice),
         },
-      ]).then((ans) => ans.componentlib);
+      ]);
+      return generateStandardOutput([this.input.promptTarget, framework, graphiclib, typescript, componentlib]);
     }
 
-    const { typescript, graphiclib, framework } = answer;
-
-    return generateStandardOutput([prefix, framework, graphiclib, typescript, componentlib]);
+    return generateStandardOutput([this.input.promptTarget, framework, graphiclib, typescript]);
   },
   needs: {
     promptTarget: (output) => {

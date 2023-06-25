@@ -1,8 +1,10 @@
 export interface StandardProcessOutput {
-  location: string;
+  host: string;
   username: string;
   repo: string;
   branch: string;
+  path: string;
+  url: string;
 }
 
 // 所有流程的名称以及其输出内容在这里定义

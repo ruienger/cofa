@@ -8,19 +8,19 @@ export default new Process<typeof name>(name, {
     if (givenurl) {
       return "tempurl";
     }
-    const answer = await prompts([
+    const { target } = await prompts([
       {
         type: "select",
         name: "target",
         message: "选择代码模板类别",
         choices: [
-          { title: "从**web端后台管理系统**类别里选择代码模板", value: "webcms" },
-          { title: "从**库**类别里选择代码模板", value: "nodelib" },
-          { title: "从我指定的url那里下载代码模板", value: "tempurl" },
+          { title: "从 web端后台管理系统 类别里选择代码模板", value: "webcms" },
+          { title: "从 库 类别里选择代码模板", value: "nodelib" },
+          { title: "从 指定的url 那里下载代码模板", value: "tempurl" },
         ],
       },
     ]);
 
-    return answer.target;
+    return target;
   },
 });
