@@ -13,7 +13,7 @@
     "dev": "rollup --config --watch",
     "init": "tsc --init && eslint --init",
     "lint": "eslint --fix",
-    "test": "rollup --input test/index.ts --file test/index.js --config && node test/index.js && rm test/index.js",
+    "test": "rollup --input tests/index.ts --file tests/index.js --config && node tests/index.js && rm tests/index.js",
     "prepare": "husky install"
   },
   "repository": {
@@ -42,6 +42,7 @@
     "lint-staged": "^13.2.2",
     "prettier": "2.8.8",
     "rollup": "^3.2.5",
+    "test": "^3.3.0",
     "typescript": "^5.1.3"
   },
   "dependencies": {

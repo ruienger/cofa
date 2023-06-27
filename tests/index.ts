@@ -1,5 +1,5 @@
-import test from "node:test";
-import assert from "node:assert";
+import test from "test";
+import assert from "assert";
 import { generateStandardOutput } from "src/utils";
 
 const rootdir = "test";
