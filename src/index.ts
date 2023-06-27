@@ -4,7 +4,8 @@ import promptTarget from "./process/target";
 import promptWebcms from "./process/webcms";
 import promptNodelib from "./process/nodelib";
 import promptTempurl from "./process/tempurl";
-import actionCreate from "./process/create";
+import actionClone from "./process/clone";
+import actionInit from "./process/init";
 
 const argv = process.argv.slice(2);
 
@@ -17,7 +18,9 @@ if (argv.includes("--help")) {
   console.log("$     cofa --template https://github.com/user/repo#branch");
   console.log("$ cofa options:");
   console.log("$     --help         log this help infomation");
-  console.log("$     --template     directly use the template-repo url as default");
+  console.log(
+    "$     --template     directly use the template-repo url as default"
+  );
   console.log("$     -t             alias of --template");
   process.exit(0);
 }
@@ -35,7 +38,14 @@ const {
   },
 });
 
-const scheduler = new Scheduler([promptTarget, promptWebcms, promptNodelib, promptTempurl, actionCreate]);
+const scheduler = new Scheduler([
+  promptTarget,
+  promptWebcms,
+  promptNodelib,
+  promptTempurl,
+  actionClone,
+  actionInit,
+]);
 
 scheduler.run({
   projectname,

@@ -1,1 +1,1 @@
-export const nullOfTheseChoice = { title: "不使用", value: null };
+export const nullOfTheseChoice = { name: "不使用", value: undefined };

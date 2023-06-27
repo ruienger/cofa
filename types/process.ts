@@ -1,4 +1,5 @@
 export interface StandardProcessOutput {
+  type: "github" | "gitlab";
   host: string;
   username: string;
   repo: string;
@@ -14,7 +15,8 @@ export type ProcessOutputMap = {
   promptWebcms: StandardProcessOutput;
   promptNodelib: StandardProcessOutput;
   promptTempurl: StandardProcessOutput;
-  actionCreate: void;
+  actionClone: StandardProcessOutput;
+  actionInit: StandardProcessOutput;
 };
 
 export type ProcessName = keyof ProcessOutputMap;
