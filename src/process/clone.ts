@@ -1,9 +1,9 @@
 import type { StandardProcessOutput } from "types/process";
 import { resolve } from "node:path";
 import Process from "src/core/process";
-import { clone, exec, gitinit, mkdir, move, pipe, rmrf, unzip } from "src/utils";
+import { clone, mkdir, move } from "src/utils";
 
-export const name = "actionCreate";
+export const name = "actionClone";
 
 export default new Process<typeof name>(name, {
   async runner({ projectname, folderpath }) {
@@ -20,20 +20,13 @@ export default new Process<typeof name>(name, {
     if (!output) throw new Error("output is not standard type");
 
     const targetpath = resolve(folderpath, projectname);
-    const zippath = resolve(targetpath, "deleteme.zip");
     const contentpath = resolve(targetpath, `${output.repo}-${output.branch}`);
     // 下载git压缩包然后为用户配置基本内容
     await mkdir(targetpath);
-    await clone(output, zippath);
-    await unzip(zippath, targetpath);
-    await rmrf(zippath);
+    await clone(output, targetpath);
     await move(contentpath, targetpath);
-    await gitinit(targetpath);
 
-    console.log("项目创建完成，在终端输入以下命令以启动：");
-    console.log("$ cd " + targetpath);
-    console.log("$ npm i");
-    console.log("$ npm run dev");
+    return output;
   },
   needs: {
     promptWebcms: () => true,

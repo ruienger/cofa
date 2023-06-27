@@ -23,7 +23,10 @@ export default class Scheduler {
   constructor(processes: Array<Process<any>>) {
     processes.forEach((process) => {
       if (this.processes.has(process.name)) {
-        console.warn(`Processes ${process.name} is duplicated and it will be skipped.`, "Please make sure that the Process's name is unique.");
+        console.warn(
+          `Processes ${process.name} is duplicated and it will be skipped.`,
+          "Please make sure that the Process's name is unique."
+        );
       } else {
         this.processes.set(process.name, process);
       }
@@ -50,17 +53,17 @@ export default class Scheduler {
       const process = this.processes.get(name)!;
 
       // 仅在流程所需的条件全部满足后将其加入执行队列
-      const keys = Object.keys(process.needs) as ProcessName[]
-      const valid = keys[process.needsValidStrategy](key => {
+      const keys = Object.keys(process.needs) as ProcessName[];
+      const valid = keys[process.needsValidStrategy]((key) => {
         if (this.finishedProcesses.has(key)) {
-          const output = this.processes.get(key)!.output
+          const output = this.processes.get(key)!.output;
           if (process.needs[key]!(output)) {
-            process.input[key] = output
-            return true
+            process.input[key] = output;
+            return true;
           }
         }
-        return false
-      })
+        return false;
+      });
 
       if (valid) {
         this.idleProcesses.delete(name);

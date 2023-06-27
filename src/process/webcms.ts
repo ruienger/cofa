@@ -1,4 +1,5 @@
-import prompts from "prompts";
+import select from "@inquirer/select";
+import confirm from "@inquirer/confirm";
 import Process from "src/core/process";
 import { generateStandardOutput } from "src/utils";
 import { nullOfTheseChoice } from "./common";
@@ -7,60 +8,88 @@ export const name = "promptWebcms";
 
 export default new Process<typeof name>(name, {
   async runner() {
-    const { framework, graphiclib, typescript } = await prompts([
-      {
-        type: "select",
-        name: "framework",
-        message: "选择您想要使用的web端框架",
-        choices: [{ title: "React", value: "react" }, { title: "Vue3", value: "vue3" }, { title: "Vue2", value: "vue2" }, nullOfTheseChoice],
-      },
-      {
-        type: "select",
-        name: "graphiclib",
-        message: "选择您想要使用的可视化库",
-        choices: [{ title: "ECharts", value: "echarts" }, { title: "D3JS", value: "d3" }, { title: "Cesium", value: "cesium" }, nullOfTheseChoice],
-      },
-      {
-        type: "toggle",
-        name: "typescript",
-        message: "是否使用typescript?",
-        initial: true,
-        active: "yes",
-        inactive: "no",
-        format: (use) => (use ? "ts" : ""),
-      },
-    ]);
-
-    if (framework) {
-      const choices: Map<string, prompts.Choice[]> = new Map([
-        [
-          "vue3",
-          [
-            { title: "Element-Plus", value: "eleplus" },
-            { title: "ViewUI", value: "view" },
-          ],
-        ],
-        [
-          "vue2",
-          [
-            { title: "Element-UI", value: "eleui" },
-            { title: "IView", value: "iview" },
-          ],
-        ],
-      ]);
-
-      const { componentlib } = await prompts([
+    const framework = await select({
+      message: "选择您想要使用的web端框架",
+      choices: [
         {
-          type: "select",
-          name: "componentlib",
-          message: "选择您想要使用的组件库",
-          choices: (choices.get(framework) || []).concat(nullOfTheseChoice),
+          value: "vue3",
+          name: "Vue3",
         },
-      ]);
-      return generateStandardOutput([this.input.promptTarget, framework, graphiclib, typescript, componentlib]);
-    }
+        {
+          value: "vue2",
+          name: "Vue2",
+          disabled: "not available yet",
+        },
+        {
+          value: "react",
+          name: "React",
+          disabled: "not available yet",
+        },
+        nullOfTheseChoice,
+      ],
+    });
+    const graphiclib = await select({
+      message: "选择您想要使用的图形库",
+      choices: [
+        {
+          value: "echarts",
+          name: "Echarts",
+          disabled: "not available yet",
+        },
+        {
+          value: "d3",
+          name: "D3js",
+          disabled: "not available yet",
+        },
+        {
+          value: "cesium",
+          name: "Cesium",
+          disabled: "not available yet",
+        },
+        nullOfTheseChoice,
+      ],
+    });
+    const onlyVue3 = framework === "vue3" ? false : "not available";
+    const onlyVue2 = framework === "vue2" ? false : "not available";
+    const componentlib = await select({
+      message: "选择您想要使用的组件库",
+      choices: [
+        {
+          value: "eleplus",
+          name: "Element-Plus",
+          disabled: onlyVue3,
+        },
+        {
+          value: "view",
+          name: "ViewUI",
+          disabled: onlyVue3,
+        },
+        {
+          value: "eleui",
+          name: "Element-UI",
+          disabled: onlyVue2,
+        },
+        {
+          value: "iview",
+          name: "IView",
+          disabled: onlyVue2,
+        },
+        nullOfTheseChoice,
+      ],
+    });
+    const typescript = (await confirm({
+      message: "是否使用typescript",
+    }))
+      ? "ts"
+      : "";
 
-    return generateStandardOutput([this.input.promptTarget, framework, graphiclib, typescript]);
+    return generateStandardOutput([
+      this.input.promptTarget,
+      framework,
+      graphiclib,
+      typescript,
+      componentlib,
+    ]);
   },
   needs: {
     promptTarget: (output) => {

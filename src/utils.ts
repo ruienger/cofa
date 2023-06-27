@@ -3,7 +3,7 @@ import { get } from "node:https";
 import { resolve } from "node:path";
 import { exec as execute } from "node:child_process";
 import { createWriteStream, promises, createReadStream } from "node:fs";
-import prompts from "prompts";
+import confirm from "@inquirer/confirm";
 import extract from "extract-zip";
 
 export function isNodejsError(v: unknown): v is NodeJS.ErrnoException {
@@ -12,28 +12,9 @@ export function isNodejsError(v: unknown): v is NodeJS.ErrnoException {
 
 /** 创建目录，如果目录已存在，则询问是否覆写 */
 export async function mkdir(path: string) {
-  try {
-    await promises.mkdir(path);
-  } catch (e) {
-    if (isNodejsError(e) && e.code === "EEXIST") {
-      const { overwrite } = await prompts({
-        type: "toggle",
-        name: "overwrite",
-        message: `文件夹${path}已经存在, 是否覆写以继续?`,
-        active: "yes",
-        inactive: "no",
-        initial: true,
-      });
-      if (overwrite) {
-        await rmrf(path);
-        await promises.mkdir(path);
-      } else {
-        throw new Error("覆写已被拒绝");
-      }
-    } else {
-      throw e;
-    }
-  }
+  await promises.mkdir(path, {
+    recursive: true,
+  });
 }
 
 /** 移动目标目录里的文件到指定目录中，覆写已存在的文件 */
@@ -55,7 +36,10 @@ export async function move(targetdir: string, destdir: string) {
 }
 
 /** 将`from`指向的文件的内容流入到`to`指向的文件或输出流 */
-export async function pipe(from: NodeJS.ReadableStream | string, to: NodeJS.WritableStream | string = process.stdout) {
+export async function pipe(
+  from: NodeJS.ReadableStream | string,
+  to: NodeJS.WritableStream | string = process.stdout
+) {
   return new Promise((res, rej) => {
     if (typeof from === "string") {
       from = createReadStream(from);
@@ -75,9 +59,26 @@ export async function unzip(zippath: string, dest: string) {
   });
 }
 
-/** 克隆目标仓库到指定目录，尝试通过https下载 */
+/** 克隆目标仓库到指定目录，尝试通过https或git下载 */
 export async function clone(repo: StandardProcessOutput, dest: string) {
-  return fetch(repo.url, dest).finally(spin(`克隆仓库到${dest}`));
+  const zippath = resolve(dest, "deleteme.zip");
+  const stop = spin(`下载${repo.url}`);
+  try {
+    await fetch(repo.url, zippath);
+    await unzip(zippath, dest);
+    await rmrf(zippath);
+  } catch (e) {
+    if (isNodejsError(e)) {
+      await exec(
+        `git clone ${repo.host}/${repo.username}/${repo.repo} ${dest} --branch ${repo.branch}`
+      );
+      await rmrf(`${dest}/.git`);
+    } else {
+      throw e;
+    }
+  } finally {
+    stop();
+  }
 }
 
 /** 获取目标地址的内容到`dest`路径所指的文件中 */
@@ -92,7 +93,10 @@ function fetch(url: string, dest: string) {
           // 资源重定向
           fetch(response.headers?.location as string, dest).then(res, rej);
         } else {
-          response.pipe(createWriteStream(dest)).once("finish", res).once("error", rej);
+          response
+            .pipe(createWriteStream(dest))
+            .once("finish", res)
+            .once("error", rej);
         }
       }
     }).once("error", rej);
@@ -100,29 +104,43 @@ function fetch(url: string, dest: string) {
 }
 
 /** 生成一个流程标准输出 */
-export function generateStandardOutput(keywords: string[]): StandardProcessOutput;
-export function generateStandardOutput(gitinfo: Omit<StandardProcessOutput, "path" | "url">): StandardProcessOutput;
-export function generateStandardOutput(arg: string[] | Omit<StandardProcessOutput, "path" | "url">): StandardProcessOutput {
+export function generateStandardOutput(
+  keywords: (string | boolean | undefined)[]
+): StandardProcessOutput;
+export function generateStandardOutput(
+  gitinfo: Omit<StandardProcessOutput, "path" | "url">
+): StandardProcessOutput;
+export function generateStandardOutput(
+  arg:
+    | (string | boolean | undefined)[]
+    | Omit<StandardProcessOutput, "path" | "url">
+): StandardProcessOutput {
   const output: StandardProcessOutput = Array.isArray(arg)
     ? {
-        host: "https://github.com/",
+        type: "github",
+        host: "https://github.com",
         username: "ruienger",
         repo: "repo-templates",
-        branch: arg.join("_").replace("__", "_"),
+        branch: arg
+          .filter((a) => Boolean(a))
+          .join("_")
+          .replace("__", "_"),
         path: "",
         url: "",
       }
     : {
-        host: arg.host,
-        username: arg.username,
-        repo: arg.repo,
-        branch: arg.branch,
+        ...arg,
         path: "",
         url: "",
       };
 
-  output.path = `${output.username}/${output.repo}/archive/refs/heads/${output.branch}.zip`;
-  output.url = `${output.host}${output.path}`;
+  if (output.type === "github") {
+    output.path = `${output.username}/${output.repo}/archive/refs/heads/${output.branch}.zip`;
+  }
+  if (output.type === "gitlab") {
+    output.path = `${output.username}/${output.repo}/-/archive/${output.branch}/gitlab-${output.branch}.zip`;
+  }
+  output.url = `${output.host}/${output.path}`;
   return output;
 }
 
@@ -156,7 +174,9 @@ export function spin(msg: string) {
   const write = (str: string) => {
     process.stdout.clearLine(0);
     process.stdout.cursorTo(0);
-    process.stdout.write(str.length > maxlen ? `${str.slice(0, maxlen - 6)}......` : str);
+    process.stdout.write(
+      str.length > maxlen ? `${str.slice(0, maxlen - 6)}......` : str
+    );
   };
 
   const interval = setInterval(() => {
@@ -171,17 +191,25 @@ export function spin(msg: string) {
 }
 
 /** 询问后尝试调用`git init` */
-export async function gitinit(path: string) {
-  const { init } = await prompts([
-    {
-      type: "toggle",
-      name: "init",
-      message: "初始化git?",
-      active: "yes",
-      inactive: "no",
-      initial: true,
-    },
-  ]);
-
-  init && (await exec(`git init ${path}`));
+export async function gitinit(path: string, type: string) {
+  const init = await confirm({
+    message: "初始化git?",
+  });
+  if (init) {
+    const tempDest = resolve(path, `.${type}/COMMIT_TEMP.md`);
+    await exec(`git init ${path}`);
+    await pipe(resolve(process.cwd(), ".github/templates/COMMIT.md"), tempDest);
+    await exec(
+      `git config --file ${resolve(
+        path,
+        ".git/config"
+      )} commit.template ${tempDest}`
+    );
+  }
 }
+
+function ask<T extends string>(c: { c: T[] }): T {
+  return c.c[0];
+}
+
+ask({ c: ["1", "2"] });
