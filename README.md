@@ -1,8 +1,12 @@
 # COFA
 
+[![Node.js CI](https://github.com/ruienger/cofa/actions/workflows/CI.yml/badge.svg)](https://github.com/ruienger/cofa/actions/workflows/CI.yml)
+
+配置一次就够了
 config ONCE FOR ALL
 
-一个简单的命令行工具
-可以：
-根据一些简单的问题以确定模板类型然后创建、初始化项目
-可以手动指定 url 以创建、初始化项目
+通过回答一些问题或者直接给出仓库 url 的方式初始化项目
+initial a project by answering some prompts or pass the repo url directly
+
+仅支持 git
+git only
