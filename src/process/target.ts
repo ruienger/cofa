@@ -1,5 +1,6 @@
 import select from "@inquirer/select";
 import Process from "src/core/process";
+import { notAvailable } from "./common";
 
 export const name = "promptTarget";
 
@@ -8,15 +9,26 @@ export default new Process<typeof name>(name, {
     if (givenurl) {
       return "tempurl";
     }
-    const target: any = await select({
-      message: "选择代码模板类别",
+    const target = await select({
+      message: "what does this project targetting at",
       choices: [
-        { name: "从 web端后台管理系统 类别里选择代码模板", value: "webcms" },
-        { name: "从 库 类别里选择代码模板", value: "nodelib", disabled: true },
-        { name: "从 指定的url 那里下载代码模板", value: "tempurl" },
+        {
+          name: "mobile application like",
+          value: "mobileapp",
+          disabled: notAvailable,
+        },
+        {
+          name: "desktop application like",
+          value: "pcapp",
+          disabled: notAvailable,
+        },
+        { name: "web content management system like", value: "webcms" },
+        { name: "web library like", value: "weblib", disabled: notAvailable },
+        { name: "nodejs library like", value: "nodelib" },
+        { name: "download template right from a git url", value: "tempurl" },
       ],
     });
 
-    return target;
+    return target as any;
   },
 });

@@ -1,1 +1,2 @@
-export const nullOfTheseChoice = { name: "不使用", value: undefined };
+export const nullOfTheseChoice = { name: "null of these", value: undefined };
+export const notAvailable = "is not available yet";

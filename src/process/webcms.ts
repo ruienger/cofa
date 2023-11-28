@@ -2,57 +2,57 @@ import select from "@inquirer/select";
 import confirm from "@inquirer/confirm";
 import Process from "src/core/process";
 import { generateStandardOutput } from "src/utils";
-import { nullOfTheseChoice } from "./common";
+import { notAvailable, nullOfTheseChoice } from "./common";
 
 export const name = "promptWebcms";
 
 export default new Process<typeof name>(name, {
   async runner() {
     const framework = await select({
-      message: "选择您想要使用的web端框架",
+      message: "which framework preset would you like",
       choices: [
         {
           value: "vue3",
-          name: "Vue3",
+          name: "Vue3(vuerouter & pinia)",
         },
         {
           value: "vue2",
-          name: "Vue2",
-          disabled: "not available yet",
+          name: "Vue2(vuerouter & vuex)",
+          disabled: notAvailable,
         },
         {
           value: "react",
           name: "React",
-          disabled: "not available yet",
+          disabled: notAvailable,
         },
         nullOfTheseChoice,
       ],
     });
     const graphiclib = await select({
-      message: "选择您想要使用的图形库",
+      message: "which graphic lib would you like",
       choices: [
         {
           value: "echarts",
           name: "Echarts",
-          disabled: "not available yet",
+          disabled: notAvailable,
         },
         {
           value: "d3",
           name: "D3js",
-          disabled: "not available yet",
+          disabled: notAvailable,
         },
         {
           value: "cesium",
           name: "Cesium",
-          disabled: "not available yet",
+          disabled: notAvailable,
         },
         nullOfTheseChoice,
       ],
     });
-    const onlyVue3 = framework === "vue3" ? false : "not available";
-    const onlyVue2 = framework === "vue2" ? false : "not available";
+    const onlyVue3 = framework === "vue3" ? false : notAvailable;
+    // const onlyVue2 = framework === "vue2" ? false : notAvailable;
     const componentlib = await select({
-      message: "选择您想要使用的组件库",
+      message: "which ui lib would you like",
       choices: [
         {
           value: "eleplus",
@@ -60,25 +60,30 @@ export default new Process<typeof name>(name, {
           disabled: onlyVue3,
         },
         {
-          value: "view",
-          name: "ViewUI",
+          value: "naiveui",
+          name: "NaiveUI",
           disabled: onlyVue3,
         },
         {
+          value: "view",
+          name: "ViewUI",
+          disabled: notAvailable,
+        },
+        {
           value: "eleui",
-          name: "Element-UI",
-          disabled: onlyVue2,
+          name: "ElementUI",
+          disabled: notAvailable,
         },
         {
           value: "iview",
           name: "IView",
-          disabled: onlyVue2,
+          disabled: notAvailable,
         },
         nullOfTheseChoice,
       ],
     });
     const typescript = (await confirm({
-      message: "是否使用typescript",
+      message: "typescript support",
     }))
       ? "ts"
       : "";
