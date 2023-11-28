@@ -5,6 +5,7 @@ import { exec as execute } from "node:child_process";
 import { createWriteStream, promises, createReadStream } from "node:fs";
 import confirm from "@inquirer/confirm";
 import extract from "extract-zip";
+import logger from "./logger";
 
 export function isNodejsError(v: unknown): v is NodeJS.ErrnoException {
   return v instanceof Error;
@@ -62,22 +63,31 @@ export async function unzip(zippath: string, dest: string) {
 /** 克隆目标仓库到指定目录，尝试通过https或git下载 */
 export async function clone(repo: StandardProcessOutput, dest: string) {
   const zippath = resolve(dest, "deleteme.zip");
-  const stop = spin(`下载${repo.url}`);
+  let stop = logger.spin(`download from ${repo.url}`);
   try {
     await fetch(repo.url, zippath);
     await unzip(zippath, dest);
     await rmrf(zippath);
+    const contentpath = resolve(dest, `${repo.repo}-${repo.branch}`);
+    await move(contentpath, dest);
+    stop();
+    logger.success("download successfully");
   } catch (e) {
     if (isNodejsError(e)) {
+      stop();
+      logger.failed("download failed. try using git clone");
+      stop = logger.spin(`clone from ${repo.url}`);
       await exec(
         `git clone ${repo.host}/${repo.username}/${repo.repo} ${dest} --branch ${repo.branch}`
       );
       await rmrf(`${dest}/.git`);
+      stop();
+      logger.success("clone successfully");
     } else {
+      stop();
+      logger.failed("failed");
       throw e;
     }
-  } finally {
-    stop();
   }
 }
 
@@ -165,51 +175,33 @@ export async function rmrf(dirpath: string) {
   });
 }
 
-/** 在终端显示旋转图案以及加载状态对应的信息 */
-export function spin(msg: string) {
-  let index = 0;
-  const arr = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-  const maxlen = process.stdout.columns;
-
-  const write = (str: string) => {
-    process.stdout.clearLine(0);
-    process.stdout.cursorTo(0);
-    process.stdout.write(
-      str.length > maxlen ? `${str.slice(0, maxlen - 6)}......` : str
-    );
-  };
-
-  const interval = setInterval(() => {
-    write(`${arr[index]} ${msg}`);
-    index = index === arr.length - 1 ? 0 : index + 1;
-  }, 100);
-
-  return function stop(msg: string = "") {
-    clearInterval(interval);
-    write(msg);
-  };
-}
-
 /** 询问后尝试调用`git init` */
-export async function gitinit(path: string, type: string) {
+export async function gitinit(path: string, type: "github" | "gitlab") {
   const init = await confirm({
-    message: "初始化git?",
+    message: "init git?",
   });
   if (init) {
-    const tempDest = resolve(path, `.${type}/COMMIT_TEMP.md`);
     await exec(`git init ${path}`);
-    await pipe(resolve(process.cwd(), ".github/templates/COMMIT.md"), tempDest);
-    await exec(
-      `git config --file ${resolve(
-        path,
-        ".git/config"
-      )} commit.template ${tempDest}`
-    );
+
+    const commitTemplate = resolve(path, `.${type}/templates/COMMIT_TEMP.md`);
+    const issueTemplate = resolve(path, `.${type}/templates/ISSUE_TEMP.md`);
+    try {
+      await exec(
+        `git config --file ${resolve(
+          path,
+          ".git/config"
+        )} commit.template ${commitTemplate}`
+      );
+      await exec(
+        `git config --file ${resolve(
+          path,
+          ".git/config"
+        )} issue.template ${issueTemplate}`
+      );
+      logger.success("git templates has been successfully init.");
+    } catch (e) {
+      logger.failed("error occurs: ");
+      logger.log(e);
+    }
   }
 }
-
-function ask<T extends string>(c: { c: T[] }): T {
-  return c.c[0];
-}
-
-ask({ c: ["1", "2"] });

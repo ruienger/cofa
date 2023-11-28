@@ -5,7 +5,7 @@ import confirm from "@inquirer/confirm";
 import { get } from "node:https";
 import { resolve } from "node:path";
 import { exec as exec$1 } from "node:child_process";
-import { promises, createWriteStream, createReadStream } from "node:fs";
+import { promises, createWriteStream } from "node:fs";
 import extract from "extract-zip";
 import input from "@inquirer/input";
 
@@ -56,6 +56,88 @@ function __awaiter(thisArg, _arguments, P, generator) {
   });
 }
 
+const FMT = {
+  end: "\x1B[0m",
+  bright: "\x1B[1m",
+  grey: "\x1B[2m",
+  italic: "\x1B[3m",
+  underline: "\x1B[4m",
+  reverse: "\x1B[7m",
+  hidden: "\x1B[8m",
+  black: "\x1B[30m",
+  red: "\x1B[31m",
+  green: "\x1B[32m",
+  yellow: "\x1B[33m",
+  blue: "\x1B[34m",
+  magenta: "\x1B[35m",
+  cyan: "\x1B[36m",
+  white: "\x1B[37m",
+  blackBG: "\x1B[40m",
+  redBG: "\x1B[41m",
+  greenBG: "\x1B[42m",
+  yellowBG: "\x1B[43m",
+  blueBG: "\x1B[44m",
+  magentaBG: "\x1B[45m",
+  cyanBG: "\x1B[46m",
+  whiteBG: "\x1B[47m", // 背景色为白色
+};
+class Logger {
+  /** 即 console.log */
+  log(...args) {
+    console.log(...args);
+  }
+  /** 在终端显示成功语句 */
+  success(msg) {
+    this.log(`${FMT.green}√${FMT.end} %s`, msg);
+  }
+  /** 在终端显示错误语句 */
+  failed(msg) {
+    this.log(`${FMT.red}×${FMT.end} %s`, msg);
+  }
+  error(msg) {
+    this.log(`${FMT.redBG}ERR${FMT.end} %s`, msg);
+  }
+  /** 在终端显示命令语句 */
+  command(msg) {
+    this.log(`${FMT.green}>${FMT.end} %s`, msg);
+  }
+  /** 在终端显示问题语句 */
+  question(msg) {
+    this.log(`${FMT.blue}?${FMT.end} %s`, msg);
+  }
+  /** 在终端显示OK语句 */
+  ok(msg) {
+    this.log(`${FMT.greenBG}OK${FMT.end} %s`, msg);
+  }
+  /** 在终端显示链接 */
+  link(msg) {
+    this.log(`${FMT.cyanBG}LINK${FMT.end} ${FMT.underline}%s${FMT.end}`, msg);
+  }
+  /** 在终端显示旋转图案以及加载状态对应的信息 */
+  spin(msg) {
+    let index = 0;
+    const arr = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+    const maxlen = process.stdout.columns;
+    // 清空标准输出并输出处理过的字符
+    const write = (str) => {
+      process.stdout.clearLine(0);
+      process.stdout.cursorTo(0);
+      process.stdout.write(
+        str.length > maxlen ? `${str.slice(0, maxlen - 6)}......` : str + ""
+      );
+    };
+    const interval = setInterval(() => {
+      write(`${FMT.cyan}${arr[index]}${FMT.end} ${msg}`);
+      index = index === arr.length - 1 ? 0 : index + 1;
+    }, 100);
+    return function stop() {
+      clearInterval(interval);
+      write("\n");
+    };
+  }
+}
+const logger = new Logger();
+
 /**
  * 调度器类，负责调度一系列流程有序的执行
  *
@@ -73,9 +155,9 @@ class Scheduler {
     this.executeQueue = [];
     processes.forEach((process) => {
       if (this.processes.has(process.name)) {
-        console.warn(
-          `Processes ${process.name} is duplicated and it will be skipped.`,
-          "Please make sure that the Process's name is unique."
+        logger.log(
+          `Processes ${process.name} is duplicated and it will be skipped`,
+          "Please make sure that the Process's name is unique"
         );
       } else {
         this.processes.set(process.name, process);
@@ -234,6 +316,9 @@ class Process {
   }
 }
 
+const nullOfTheseChoice = { name: "null of these", value: undefined };
+const notAvailable = "is not available yet";
+
 const name$5 = "promptTarget";
 var promptTarget = new Process(name$5, {
   runner({ givenurl }) {
@@ -242,15 +327,22 @@ var promptTarget = new Process(name$5, {
         return "tempurl";
       }
       const target = yield select({
-        message: "选择代码模板类别",
+        message: "what does this project targetting at",
         choices: [
-          { name: "从 web端后台管理系统 类别里选择代码模板", value: "webcms" },
           {
-            name: "从 库 类别里选择代码模板",
-            value: "nodelib",
-            disabled: true,
+            name: "mobile application like",
+            value: "mobileapp",
+            disabled: notAvailable,
           },
-          { name: "从 指定的url 那里下载代码模板", value: "tempurl" },
+          {
+            name: "desktop application like",
+            value: "pcapp",
+            disabled: notAvailable,
+          },
+          { name: "web content management system like", value: "webcms" },
+          { name: "web library like", value: "weblib", disabled: notAvailable },
+          { name: "nodejs library like", value: "nodelib" },
+          { name: "download template right from a git url", value: "tempurl" },
         ],
       });
       return target;
@@ -290,20 +382,6 @@ function move(targetdir, destdir) {
     rmrf(targetdir);
   });
 }
-/** 将`from`指向的文件的内容流入到`to`指向的文件或输出流 */
-function pipe(from, to = process.stdout) {
-  return __awaiter(this, void 0, void 0, function* () {
-    return new Promise((res, rej) => {
-      if (typeof from === "string") {
-        from = createReadStream(from);
-      }
-      if (typeof to === "string") {
-        to = createWriteStream(to);
-      }
-      from.pipe(to).once("finish", res).once("error", rej);
-    });
-  });
-}
 /** 解压目标压缩文件到指定目录 */
 function unzip(zippath, dest) {
   return __awaiter(this, void 0, void 0, function* () {
@@ -316,22 +394,31 @@ function unzip(zippath, dest) {
 function clone(repo, dest) {
   return __awaiter(this, void 0, void 0, function* () {
     const zippath = resolve(dest, "deleteme.zip");
-    const stop = spin(`下载${repo.url}`);
+    let stop = logger.spin(`download from ${repo.url}`);
     try {
       yield fetch(repo.url, zippath);
       yield unzip(zippath, dest);
       yield rmrf(zippath);
+      const contentpath = resolve(dest, `${repo.repo}-${repo.branch}`);
+      yield move(contentpath, dest);
+      stop();
+      logger.success("download successfully");
     } catch (e) {
       if (isNodejsError(e)) {
+        stop();
+        logger.failed("download failed. try using git clone");
+        stop = logger.spin(`clone from ${repo.url}`);
         yield exec(
           `git clone ${repo.host}/${repo.username}/${repo.repo} ${dest} --branch ${repo.branch}`
         );
         yield rmrf(`${dest}/.git`);
+        stop();
+        logger.success("clone successfully");
       } else {
+        stop();
+        logger.failed("failed");
         throw e;
       }
-    } finally {
-      stop();
     }
   });
 }
@@ -407,105 +494,87 @@ function rmrf(dirpath) {
     });
   });
 }
-/** 在终端显示旋转图案以及加载状态对应的信息 */
-function spin(msg) {
-  let index = 0;
-  const arr = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-  const maxlen = process.stdout.columns;
-  const write = (str) => {
-    process.stdout.clearLine(0);
-    process.stdout.cursorTo(0);
-    process.stdout.write(
-      str.length > maxlen ? `${str.slice(0, maxlen - 6)}......` : str
-    );
-  };
-  const interval = setInterval(() => {
-    write(`${arr[index]} ${msg}`);
-    index = index === arr.length - 1 ? 0 : index + 1;
-  }, 100);
-  return function stop(msg = "") {
-    clearInterval(interval);
-    write(msg);
-  };
-}
 /** 询问后尝试调用`git init` */
 function gitinit(path, type) {
   return __awaiter(this, void 0, void 0, function* () {
     const init = yield confirm({
-      message: "初始化git?",
+      message: "init git?",
     });
     if (init) {
-      const tempDest = resolve(path, `.${type}/COMMIT_TEMP.md`);
       yield exec(`git init ${path}`);
-      yield pipe(
-        resolve(process.cwd(), ".github/templates/COMMIT.md"),
-        tempDest
-      );
-      yield exec(
-        `git config --file ${resolve(
-          path,
-          ".git/config"
-        )} commit.template ${tempDest}`
-      );
+      const commitTemplate = resolve(path, `.${type}/templates/COMMIT_TEMP.md`);
+      const issueTemplate = resolve(path, `.${type}/templates/ISSUE_TEMP.md`);
+      try {
+        yield exec(
+          `git config --file ${resolve(
+            path,
+            ".git/config"
+          )} commit.template ${commitTemplate}`
+        );
+        yield exec(
+          `git config --file ${resolve(
+            path,
+            ".git/config"
+          )} issue.template ${issueTemplate}`
+        );
+        logger.success("git templates has been successfully init.");
+      } catch (e) {
+        logger.failed("error occurs: ");
+        logger.log(e);
+      }
     }
   });
 }
-function ask(c) {
-  return c.c[0];
-}
-ask({ c: ["1", "2"] });
-
-const nullOfTheseChoice = { name: "不使用", value: undefined };
 
 const name$4 = "promptWebcms";
 var promptWebcms = new Process(name$4, {
   runner() {
     return __awaiter(this, void 0, void 0, function* () {
       const framework = yield select({
-        message: "选择您想要使用的web端框架",
+        message: "which framework preset would you like",
         choices: [
           {
             value: "vue3",
-            name: "Vue3",
+            name: "Vue3(vuerouter & pinia)",
           },
           {
             value: "vue2",
-            name: "Vue2",
-            disabled: "not available yet",
+            name: "Vue2(vuerouter & vuex)",
+            disabled: notAvailable,
           },
           {
             value: "react",
             name: "React",
-            disabled: "not available yet",
+            disabled: notAvailable,
           },
           nullOfTheseChoice,
         ],
       });
       const graphiclib = yield select({
-        message: "选择您想要使用的图形库",
+        message: "which graphic lib would you like",
         choices: [
           {
             value: "echarts",
             name: "Echarts",
-            disabled: "not available yet",
+            disabled: notAvailable,
           },
           {
             value: "d3",
             name: "D3js",
-            disabled: "not available yet",
+            disabled: notAvailable,
           },
           {
             value: "cesium",
             name: "Cesium",
-            disabled: "not available yet",
+            disabled: notAvailable,
           },
           nullOfTheseChoice,
         ],
       });
-      const onlyVue3 = framework === "vue3" ? false : "not available";
-      const onlyVue2 = framework === "vue2" ? false : "not available";
+      const onlyVue3 = framework === "vue3" ? false : notAvailable;
+      // const onlyVue2 = framework === "vue2" ? false : notAvailable;
       const componentlib = yield select({
-        message: "选择您想要使用的组件库",
+        message: "which ui lib would you like",
         choices: [
           {
             value: "eleplus",
@@ -513,25 +582,30 @@ var promptWebcms = new Process(name$4, {
             disabled: onlyVue3,
           },
           {
-            value: "view",
-            name: "ViewUI",
+            value: "naiveui",
+            name: "NaiveUI",
             disabled: onlyVue3,
           },
           {
+            value: "view",
+            name: "ViewUI",
+            disabled: notAvailable,
+          },
+          {
             value: "eleui",
-            name: "Element-UI",
-            disabled: onlyVue2,
+            name: "ElementUI",
+            disabled: notAvailable,
           },
           {
             value: "iview",
             name: "IView",
-            disabled: onlyVue2,
+            disabled: notAvailable,
           },
           nullOfTheseChoice,
         ],
       });
       const typescript = (yield confirm({
-        message: "是否使用typescript",
+        message: "typescript support",
       }))
         ? "ts"
         : "";
@@ -556,19 +630,18 @@ var promptNodelib = new Process(name$3, {
   runner() {
     return __awaiter(this, void 0, void 0, function* () {
       const buildlib = yield select({
-        message: "选择您想要使用的打包库",
+        message: "which packager would you like",
         choices: [
           { name: "RollUp", value: "rollup" },
-          { name: "Vite", value: "vite" },
+          { name: "Vite", value: "vite", disabled: notAvailable },
           nullOfTheseChoice,
         ],
       });
-      const typescript = yield confirm({
-        message: "是否使用typescript",
-        transformer(value) {
-          return value ? "ts" : "";
-        },
-      });
+      const typescript = (yield confirm({
+        message: "typescript support?",
+      }))
+        ? "ts"
+        : "";
       return generateStandardOutput([
         this.input.promptTarget,
         buildlib,
@@ -590,24 +663,27 @@ var promptTempurl = new Process(name$2, {
       // (https://address)/(user)/(repo)(#(branch))?
       const reg = /^(https?:\/\/[\w-\.]+)\/([\w-]+)\/([\w-]+)(\#([\w-]+))?$/;
       const type = yield select({
-        message: "选择git仓库类别",
+        message: "download code from",
         choices: [
           { name: "github", value: "github" },
           { name: "gitlab", value: "gitlab" },
         ],
       });
       if (!givenurl) {
-        const url = yield input({
+        givenurl = yield input({
           message:
-            "输入代码模板url，例如：https://github.com/user/repo#branch?",
+            "input the repo url. e.g. https://github.com/user/repo#branch",
           validate: (prev) => {
             return reg.test(prev);
           },
         });
-        givenurl = url;
+      } else if (!reg.test(givenurl)) {
+        logger.failed(
+          "given url do not match with the standard format. e.g. https://github.com/user/repo#branch"
+        );
+        throw new Error("format error");
       }
       const match = reg.exec(givenurl);
-      if (!match) throw new Error("given url do not match the standard rule");
       return generateStandardOutput({
         type,
         host: match[1],
@@ -638,16 +714,14 @@ var actionClone = new Process(name$1, {
       if (this.input.promptTempurl) {
         output = this.input.promptTempurl;
       }
-      if (!output) throw new Error("output is not standard type");
+      if (!output) {
+        logger.error("internal: output is not a standard type");
+        throw new Error("output error");
+      }
       const targetpath = resolve(folderpath, projectname);
-      const contentpath = resolve(
-        targetpath,
-        `${output.repo}-${output.branch}`
-      );
       // 下载git压缩包然后为用户配置基本内容
       yield mkdir(targetpath);
       yield clone(output, targetpath);
-      yield move(contentpath, targetpath);
       return output;
     });
   },
@@ -666,10 +740,13 @@ var actionInit = new Process(name, {
       const output = this.input.actionClone;
       const targetpath = resolve(folderpath, projectname);
       yield gitinit(targetpath, output.type);
-      console.log("项目初始化完成，在终端输入以下命令以启动：");
-      console.log("$ cd " + targetpath);
-      console.log("$ npm i");
-      console.log("$ npm run dev");
+      yield exec(`npm pkg set name=${projectname}`);
+      logger.success("project has been succuessfully init");
+      logger.success("run these commands to continue");
+      logger.command(`cd ${targetpath}`);
+      logger.command("npm i");
+      logger.command("npm run dev");
+      logger.ok("HAPPY DEVELOPE");
       return output;
     });
   },
@@ -678,44 +755,67 @@ var actionInit = new Process(name, {
   },
 });
 
-const argv = process.argv.slice(2);
-if (argv.includes("--help")) {
-  console.log("$ cofa [-t | --template] <projectname> [<folderpath>]");
-  console.log("$ cofa usages:");
-  console.log("$     cofa");
-  console.log("$     cofa mycli");
-  console.log("$     cofa mycli /path/to/target/");
-  console.log("$     cofa --template https://github.com/user/repo#branch");
-  console.log("$ cofa options:");
-  console.log("$     --help         log this help infomation");
-  console.log(
-    "$     --template     directly use the template-repo url as default"
-  );
-  console.log("$     -t             alias of --template");
-  process.exit(0);
+function main(argv) {
+  return __awaiter(this, void 0, void 0, function* () {
+    const {
+      _: [projectname = "cofa-project", folderpath = ""],
+      template,
+      help,
+      version,
+    } = mri(argv, {
+      alias: {
+        t: "template",
+        h: "help",
+        v: "version",
+      },
+      unknown(flag) {
+        logger.question("unknown option " + flag);
+        process.exit(0);
+      },
+    });
+    if (help) {
+      // 帮助页
+      logger.command("cofa [-t | --template] <projectname> [<folderpath>]");
+      logger.command("cofa usages:");
+      logger.command("    cofa");
+      logger.command("    cofa your_project_name");
+      logger.command("    cofa your_project_name /path/to/target/");
+      logger.command("    cofa --template https://github.com/user/repo#branch");
+      logger.command("cofa options:");
+      logger.command("    --help         log this help infomation");
+      logger.command("    -h             alias of --help");
+      logger.command("    --version      log cofa version");
+      logger.command("    -v             alias of --version");
+      logger.command(
+        "    --template     directly use the template-repo url as default"
+      );
+      logger.command("    -t             alias of --template");
+      process.exit(0);
+    }
+    if (version) {
+      // 获取 package.json 中的 version 字段并展示
+      const { stdout, stderr } = yield exec("npm pkg get version");
+      if (stderr) {
+        logger.failed("unable to get cofa's version");
+      } else {
+        logger.log(stdout.replace(/"/g, ""));
+      }
+      process.exit(0);
+    }
+    const scheduler = new Scheduler([
+      promptTarget,
+      promptWebcms,
+      promptNodelib,
+      promptTempurl,
+      actionClone,
+      actionInit,
+    ]);
+    scheduler.run({
+      projectname,
+      folderpath,
+      givenurl: template,
+    });
+  });
 }
-const {
-  _: [projectname = "cofa-creation", folderpath = ""],
-  template,
-} = mri(argv, {
-  alias: {
-    t: "template",
-  },
-  unknown(flag) {
-    console.error("unknown option " + flag);
-    process.exit(0);
-  },
-});
-const scheduler = new Scheduler([
-  promptTarget,
-  promptWebcms,
-  promptNodelib,
-  promptTempurl,
-  actionClone,
-  actionInit,
-]);
-scheduler.run({
-  projectname,
-  folderpath,
-  givenurl: template,
-});
+const argv = process.argv.slice(2);
+main(argv);

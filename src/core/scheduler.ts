@@ -1,6 +1,7 @@
 import type { ProcessName } from "types/process";
 import type { CofaArgv } from "types/command";
 import type Process from "./process";
+import logger from "src/logger";
 
 /**
  * 调度器类，负责调度一系列流程有序的执行
@@ -23,9 +24,9 @@ export default class Scheduler {
   constructor(processes: Array<Process<any>>) {
     processes.forEach((process) => {
       if (this.processes.has(process.name)) {
-        console.warn(
-          `Processes ${process.name} is duplicated and it will be skipped.`,
-          "Please make sure that the Process's name is unique."
+        logger.log(
+          `Processes ${process.name} is duplicated and it will be skipped`,
+          "Please make sure that the Process's name is unique"
         );
       } else {
         this.processes.set(process.name, process);
