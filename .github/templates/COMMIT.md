@@ -1,14 +1,7 @@
-# [bugfix-0000] (bug title)
+# [bugfix feature]
 
-<!-- # [feature-xxx] (feature title) -->
-<!-- # [enhance-xxx] (enhance title) -->
+## Issue
 
-## 原因
+## Resolution
 
-如题
-
-## 解决方案
-
-如题
-
-## 备注
+## Others

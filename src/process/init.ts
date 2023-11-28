@@ -2,6 +2,7 @@ import type { StandardProcessOutput } from "types/process";
 import { resolve } from "node:path";
 import Process from "src/core/process";
 import { exec, gitinit } from "src/utils";
+import logger from "src/logger";
 
 export const name = "actionInit";
 
@@ -11,10 +12,13 @@ export default new Process<typeof name>(name, {
     const targetpath = resolve(folderpath, projectname);
     await gitinit(targetpath, output.type);
 
-    console.log("项目初始化完成，在终端输入以下命令以启动：");
-    console.log("$ cd " + targetpath);
-    console.log("$ npm i");
-    console.log("$ npm run dev");
+    await exec(`npm pkg set name=${projectname}`);
+    logger.success("project has been succuessfully init");
+    logger.success("run these commands to continue");
+    logger.command(`cd ${targetpath}`);
+    logger.command("npm i");
+    logger.command("npm run dev");
+    logger.ok("HAPPY DEVELOPE");
 
     return output;
   },

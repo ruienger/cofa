@@ -2,26 +2,25 @@ import select from "@inquirer/select";
 import confirm from "@inquirer/confirm";
 import Process from "src/core/process";
 import { generateStandardOutput } from "src/utils";
-import { nullOfTheseChoice } from "./common";
+import { notAvailable, nullOfTheseChoice } from "./common";
 
 export const name = "promptNodelib";
 
 export default new Process<typeof name>(name, {
   async runner() {
     const buildlib = await select({
-      message: "选择您想要使用的打包库",
+      message: "which packager would you like",
       choices: [
         { name: "RollUp", value: "rollup" },
-        { name: "Vite", value: "vite" },
+        { name: "Vite", value: "vite", disabled: notAvailable },
         nullOfTheseChoice,
       ],
     });
-    const typescript: any = await confirm({
-      message: "是否使用typescript",
-      transformer(value) {
-        return value ? "ts" : "";
-      },
-    });
+    const typescript = (await confirm({
+      message: "typescript support?",
+    }))
+      ? "ts"
+      : "";
 
     return generateStandardOutput([
       this.input.promptTarget,
