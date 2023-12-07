@@ -3,4 +3,3 @@ node_modules/
 
 # Build directories
 dist/
-index.js
