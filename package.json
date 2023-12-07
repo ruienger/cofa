@@ -3,11 +3,7 @@
   "version": "0.0.1",
   "description": "a cli run in a processflow you customized",
   "type": "module",
-  "bin": "index.js",
-  "main": "index.js",
-  "files": [
-    "index.js"
-  ],
+  "bin": "dist/index.js",
   "scripts": {
     "build": "rollup --config",
     "dev": "rollup --config --watch",
